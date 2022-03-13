@@ -4,3 +4,5 @@ psycopg2-binary
 python-dotenv
 gunicorn
 pillow
+django-cors-headers
+djangorestframework-simplejwt
