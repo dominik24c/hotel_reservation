@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User, Group
+from django.db import transaction
 from rest_framework import serializers
 
 from .groups import GROUPS
@@ -27,8 +28,8 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class BaseUserSerializer(serializers.ModelSerializer):
-    country = serializers.CharField(source='profile.country')
-    date_of_birth = serializers.DateField(source='profile.date_of_birth')
+    country = serializers.CharField(source='profile.country', required=False)
+    date_of_birth = serializers.DateField(source='profile.date_of_birth', required=False)
     groups = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
@@ -51,22 +52,23 @@ class UserSerializer(BaseUserSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        password = validated_data.pop('password')
         group_data = validated_data.pop('groups')
+
+        group = Group.objects.filter(name=group_data['name']).first()
+        if group is None:
+            raise serializers.ValidationError(f"This group doesn't exist! Only {', '.join(GROUPS)} is allowed!")
+
+        password = validated_data.pop('password')
         profile_data = validated_data.pop('profile')
         user = User(**validated_data)
         user.set_password(password)
         profile = Profile(**profile_data)
-
-        group = Group.objects.filter(name=group_data['name']).first()
-        if group is None:
-            serializers.ValidationError(f"This group doesnt exists! Only [{', '.join(GROUPS)}] is allowed")
-
         profile.user = user
 
-        user.save()
-        user.groups.add(group)
-        profile.save()
+        with transaction.atomic():
+            user.save()
+            user.groups.add(group)
+            profile.save()
 
         return user
 
@@ -79,22 +81,12 @@ class UserRUDSerializer(BaseUserSerializer):
 
     def update(self, instance, validated_data):
         profile = validated_data.pop('profile')
+        instance.profile.country = profile.get('country', instance.profile.country).lower()
+        instance.profile.date_of_birth = profile.get('date_of_birth', instance.profile.date_of_birth)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
 
-        country = profile.get('country')
-        if country is not None:
-            instance.profile.country = country.lower()
-
-        date_of_birth = profile.get('date_of_birth')
-        if date_of_birth is not None:
-            instance.profile.date_of_birth = date_of_birth
-
-        last_name = validated_data.get('last_name')
-        if last_name is not None:
-            instance.last_name = last_name
-
-        first_name = validated_data.get('first_name')
-        if first_name is not None:
-            instance.first_name = first_name
-
-        instance.save()
+        with transaction.atomic():
+            instance.save()
+            instance.profile.save()
         return instance
