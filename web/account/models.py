@@ -1,4 +1,4 @@
-from base_models.models import BaseModel
+from base.models import BaseModel
 from django.contrib.auth.models import User
 from django.db import models
 

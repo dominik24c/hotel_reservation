@@ -1,23 +1,15 @@
+from base.test import BaseApiTestCase
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
 
-from .factory import create_groups, create_users_and_profiles, TEST_PASSWORD
+from .factory import TEST_PASSWORD
 from ..groups import G_CUSTOMER
 from ..models import Customer, HotelOwner
 
 
-class BaseApiTest(APITestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
-        groups = create_groups()
-        create_users_and_profiles(15, groups)
-
-
-class UserApiViewTest(BaseApiTest):
+class UserApiViewTest(BaseApiTestCase):
     def test_login(self) -> None:
         user = User.objects.first()
         credentials = {
@@ -62,6 +54,7 @@ class UserApiViewTest(BaseApiTest):
         response = self.client.post(reverse('account:create-list-view'), body)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['message'], 'User was created!')
         user = User.objects.prefetch_related('profile', 'groups') \
             .filter(username=body['username']).first()
         self.assertIsNotNone(user)
@@ -124,7 +117,7 @@ class UserApiViewTest(BaseApiTest):
         self.assertIsNone(User.objects.filter(pk=pk).first())
 
 
-class CustomerAndHotelOwnerListApiView(BaseApiTest):
+class CustomerAndHotelOwnerListApiView(BaseApiTestCase):
     def _base_test_case(self, view_name: str) -> list:
         response = self.client.get(reverse(view_name))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
