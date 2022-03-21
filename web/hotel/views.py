@@ -3,7 +3,7 @@ from rest_framework import generics, permissions
 
 from .models import Hotel, Room
 from .permissions import HotelOwnerPermission, OwnerEditHotelPermission, RoomHotelOwnerPermission
-from .serializers import HotelSerializer, HotelUpdateSerializer, RoomSerializer
+from .serializers import HotelSerializer, HotelUpdateSerializer, RoomSerializer, RoomUpdateSerializer
 
 
 class HotelCreateListView(generics.ListCreateAPIView):
@@ -34,3 +34,15 @@ class RoomCreateListView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         return create_view_handlers(self, request, {'message': 'Room was created!'}, *args, **kwargs)
+
+
+class RoomRUDView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Room.objects.prefetch_related('hotel__owner').all()
+    serializer_class = RoomSerializer
+    permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return RoomUpdateSerializer
+        else:
+            return self.serializer_class

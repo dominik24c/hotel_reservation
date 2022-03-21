@@ -47,9 +47,8 @@ class HotelSerializer(serializers.ModelSerializer):
         return Hotel.objects.create(**validated_data, owner=user)
 
 
-class RoomSerializer(serializers.ModelSerializer):
+class BaseRoomSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
-    hotel_id = serializers.CharField(source='hotel.id')
     number = serializers.IntegerField(validators=[
         validators.UniqueValidator(
             queryset=Room.objects.all(),
@@ -63,6 +62,10 @@ class RoomSerializer(serializers.ModelSerializer):
         model = Room
         exclude = ['hotel', 'created_at', 'updated_at']
 
+
+class RoomSerializer(BaseRoomSerializer):
+    hotel_id = serializers.CharField(source='hotel.id')
+
     def create(self, validated_data) -> Room:
         hotel_data = validated_data.pop('hotel')
         room = Room(**validated_data)
@@ -70,7 +73,12 @@ class RoomSerializer(serializers.ModelSerializer):
         if hotel is None:
             raise serializers.ValidationError("Hotel was not found!")
         room.hotel = hotel
+        room.save()
         return room
+
+
+class RoomUpdateSerializer(BaseRoomSerializer):
+    pass
 
 #
 # class CommentSerializer(serializers.ModelSerializer):
