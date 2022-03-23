@@ -47,8 +47,8 @@ class Room(BaseModelWithDateTime):
 
 class Comment(BaseModelWithDateTime):
     content = models.TextField(max_length=1000)
-    users = models.ManyToManyField(User)
-    hotels = models.ManyToManyField(Hotel)
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name='comments')
+    hotel = models.ForeignKey(to=Hotel, on_delete=models.CASCADE, related_name='comments')
     rating = models.PositiveSmallIntegerField(default=5, validators=[
         validators.MinValueValidator(1),
         validators.MaxValueValidator(5),

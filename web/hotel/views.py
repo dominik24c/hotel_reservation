@@ -1,9 +1,15 @@
 from base.view_utils import create_view_handlers
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets
+from rest_framework import mixins
 
-from .models import Hotel, Room
-from .permissions import HotelOwnerPermission, OwnerEditHotelPermission, RoomHotelOwnerPermission
-from .serializers import HotelSerializer, HotelUpdateSerializer, RoomSerializer, RoomUpdateSerializer
+from .models import Hotel, Room, Comment
+from .permissions import HotelOwnerPermission, \
+    OwnerEditHotelPermission, RoomHotelOwnerPermission, \
+    UserCommentPermission
+from .serializers import HotelSerializer, \
+    HotelUpdateSerializer, RoomSerializer, \
+    RoomUpdateSerializer, CommentSerializer, \
+    CommentCreateSerializer
 
 
 class HotelCreateListView(generics.ListCreateAPIView):
@@ -46,3 +52,43 @@ class RoomRUDView(generics.RetrieveUpdateDestroyAPIView):
             return RoomUpdateSerializer
         else:
             return self.serializer_class
+
+
+class CommentCreateListView(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated, UserCommentPermission]
+
+
+class HotelViewSet(viewsets.ModelViewSet):
+    serializer_class = HotelSerializer
+    queryset = Hotel.objects.prefetch_related('owner').all()
+    permission_classes = [permissions.IsAuthenticated, OwnerEditHotelPermission]
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Comment.objects.filter(hotel=self.kwargs['hotels_pk'])
+
+
+class CommentDeleteUpdateView(mixins.DestroyModelMixin,
+                              mixins.UpdateModelMixin,
+                              generics.GenericAPIView):
+    queryset = Comment.objects.select_related('user').all()
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated, UserCommentPermission]
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+class CommentCreateView(generics.CreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]

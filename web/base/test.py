@@ -10,5 +10,5 @@ class BaseApiTestCase(APITestCase):
 
     def setUp(self) -> None:
         from django.contrib.auth.models import User
-        user = User.objects.first()
-        self.client.force_authenticate(user)
+        self.user = User.objects.first()
+        self.client.force_authenticate(self.user)

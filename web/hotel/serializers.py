@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework import validators
 
-from .models import Hotel, Room
+from .models import Hotel, Room, Comment
 
 
 class HotelUpdateSerializer(serializers.ModelSerializer):
@@ -80,8 +80,29 @@ class RoomSerializer(BaseRoomSerializer):
 class RoomUpdateSerializer(BaseRoomSerializer):
     pass
 
-#
-# class CommentSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Comment
-#         fields = '__all__'
+
+class CommentSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    date = serializers.DateTimeField(source='updated_at', read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'username', 'content', 'rating', 'date']
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    hotel_id = serializers.CharField(source='hotel.id', write_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['content', 'rating', 'hotel_id']
+
+    def create(self, validated_data):
+        hotel = validated_data.pop('hotel')
+        hotel_obj = Hotel.objects.filter(id=hotel['id']).first()
+        request = self.context.get('request')
+
+        if hotel_obj is None:
+            raise serializers.ValidationError("Hotel doesn't exist!")
+        return Comment.objects.create(**validated_data, hotel=hotel_obj, user=request.user)

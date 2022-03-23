@@ -20,6 +20,6 @@ API = 'api'
 
 urlpatterns = [
     path(f'{API}/', include('account.urls', namespace='account'), name='account'),
-    path(f'{API}/hotels/', include('hotel.urls', namespace='hotel'), name='hotel'),
+    path(f'{API}/', include('hotel.urls', namespace='hotel'), name='hotel'),
     path('admin/', admin.site.urls),
 ]

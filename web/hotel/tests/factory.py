@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyInteger, FuzzyDecimal
 
-from ..models import Hotel, Room
+from ..models import Hotel, Room, Comment
 
 
 class HotelFactory(DjangoModelFactory):
@@ -33,13 +33,21 @@ class RoomFactory(DjangoModelFactory):
     is_toilet = factory.Sequence(lambda _: bool(random.randrange(0, 2)))
 
 
+class CommentFactory(DjangoModelFactory):
+    class Meta:
+        model = Comment
+
+    content = factory.Faker('text')
+    rating = FuzzyInteger(1, 6)
+
+
 def create_hotels(users: list[User]) -> list[Hotel]:
     hotels = [HotelFactory.build(owner=user) for user in users]
     Hotel.objects.bulk_create(hotels)
     return hotels
 
 
-def create_rooms(hotels: list[Hotel], amount_of_rooms) -> list[Room]:
+def create_rooms(hotels: list[Hotel], amount_of_rooms: int) -> list[Room]:
     rooms = []
     for hotel in hotels:
         tmp_rooms = [RoomFactory.build(hotel=hotel) for _ in range(amount_of_rooms)]
@@ -47,3 +55,13 @@ def create_rooms(hotels: list[Hotel], amount_of_rooms) -> list[Room]:
         rooms.extend(tmp_rooms)
 
     return rooms
+
+
+def create_comments(users: list[User], hotels: list[Hotel], amount_of_comments: int) -> list[Comment]:
+    comments = []
+    for user, hotel in zip(users, hotels):
+        comments_tmp = [CommentFactory.build(user=user, hotel=hotel) for _ in range(amount_of_comments)]
+        Comment.objects.bulk_create(comments_tmp)
+        comments.extend(comments_tmp)
+
+    return comments

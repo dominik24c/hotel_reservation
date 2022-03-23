@@ -27,3 +27,13 @@ class RoomHotelOwnerPermission(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.username == obj.hotel.owner.username
+
+
+class UserCommentPermission(permissions.BasePermission):
+    message = "It's not your comment, you cannot delete or update it!"
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        return request.user.username == obj.user.username
