@@ -19,6 +19,7 @@ from django.urls import path, include
 API = 'api'
 
 urlpatterns = [
+    path(f'{API}/reservation/', include('reservation.urls', namespace='reservation'), name='reservation'),
     path(f'{API}/', include('account.urls', namespace='account'), name='account'),
     path(f'{API}/', include('hotel.urls', namespace='hotel'), name='hotel'),
     path('admin/', admin.site.urls),
