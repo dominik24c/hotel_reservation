@@ -1,11 +1,11 @@
 from account.validators import only_letters, alphanumeric
-from base.models import BaseModelWithDateTime
+from base.models import TimeStampedModel
 from django.contrib.auth.models import User
 from django.core import validators
 from django.db import models
 
 
-class Hotel(BaseModelWithDateTime):
+class Hotel(TimeStampedModel):
     name = models.CharField(max_length=100)
     owner = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name='hotels')
     description = models.TextField(max_length=1000)
@@ -24,7 +24,7 @@ class Hotel(BaseModelWithDateTime):
         ordering = ['-created_at']
 
 
-class Room(BaseModelWithDateTime):
+class Room(TimeStampedModel):
     number = models.PositiveIntegerField(unique=True)
     beds = models.PositiveSmallIntegerField(default=1, validators=[
         validators.MinValueValidator(1),
@@ -45,7 +45,7 @@ class Room(BaseModelWithDateTime):
         unique_together = ['id', 'number']
 
 
-class Comment(BaseModelWithDateTime):
+class Comment(TimeStampedModel):
     content = models.TextField(max_length=1000)
     user = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name='comments')
     hotel = models.ForeignKey(to=Hotel, on_delete=models.CASCADE, related_name='comments')
