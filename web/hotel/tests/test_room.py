@@ -50,10 +50,11 @@ class RoomApiViewTest(BaseRoomViewTestCase):
         self._test_response_data(response.data, room)
 
 
-class CreateDeleteUpdateApiViewTest(BaseRoomViewTestCase):
+class RoomCRUApiViewTest(BaseRoomViewTestCase):
     def test_delete_room_view(self) -> None:
         room = self._get_room()
-        response = self.client.delete(reverse('hotel:update-delete-room-view', kwargs={'pk': room.id}))
+        response = self.client.delete(
+            reverse('hotel:hotel-rooms-detail', kwargs={'hotel_pk': room.hotel.id, 'pk': room.id}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Room.DoesNotExist):
             room.refresh_from_db()
@@ -70,7 +71,8 @@ class CreateDeleteUpdateApiViewTest(BaseRoomViewTestCase):
             'is_toilet': True,
         }
 
-        response = self.client.put(reverse('hotel:update-delete-room-view', kwargs={'pk': room.id}), body)
+        response = self.client.put(reverse('hotel:hotel-rooms-detail',
+                                           kwargs={'hotel_pk': room.hotel.id, 'pk': room.id}), body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         room.refresh_from_db()
@@ -89,7 +91,7 @@ class CreateDeleteUpdateApiViewTest(BaseRoomViewTestCase):
             'is_toilet': True,
         }
 
-        response = self.client.post(reverse('hotel:create-room-view'), body)
+        response = self.client.post(reverse('hotel:hotel-rooms-list', kwargs={'hotel_pk': hotel.id}), body)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['message'], 'Room was created!')
         hotel.refresh_from_db()

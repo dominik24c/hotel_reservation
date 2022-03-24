@@ -28,6 +28,7 @@ class HotelSerializer(serializers.ModelSerializer):
     is_pools = serializers.BooleanField(required=False)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+
     # rooms = serializers.HyperlinkedRelatedField(many=True, read_only=True,
     #                                             view_name='hotel:create-list-room-view')
 
@@ -47,7 +48,7 @@ class HotelSerializer(serializers.ModelSerializer):
         return Hotel.objects.create(**validated_data, owner=user)
 
 
-class BaseRoomSerializer(serializers.ModelSerializer):
+class RoomSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
     number = serializers.IntegerField(validators=[
         validators.UniqueValidator(
@@ -62,23 +63,12 @@ class BaseRoomSerializer(serializers.ModelSerializer):
         model = Room
         exclude = ['hotel', 'created_at', 'updated_at']
 
-
-class RoomSerializer(BaseRoomSerializer):
-    hotel_id = serializers.CharField(source='hotel.id')
-
     def create(self, validated_data) -> Room:
-        hotel_data = validated_data.pop('hotel')
-        room = Room(**validated_data)
-        hotel = Hotel.objects.filter(id=hotel_data['id']).first()
-        if hotel is None:
-            raise serializers.ValidationError("Hotel was not found!")
-        room.hotel = hotel
+        hotel_pk = self.context.get('hotel_pk')
+        hotel = Hotel.objects.get(pk=hotel_pk)
+        room = Room(hotel=hotel, **validated_data)
         room.save()
         return room
-
-
-class RoomUpdateDeleteSerializer(BaseRoomSerializer):
-    pass
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -90,19 +80,26 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ['id', 'username', 'content', 'rating', 'date']
 
+    def create(self, validated_data):
+        request = self.context.get('request')
+        hotel_pk = self.context.get('hotel_pk')
+        hotel = Hotel.objects.get(pk=hotel_pk)
+        return Comment.objects.create(**validated_data, hotel=hotel, user=request.user)
+
 
 class CommentCreateSerializer(serializers.ModelSerializer):
-    hotel_id = serializers.CharField(source='hotel.id', write_only=True)
-
-    class Meta:
-        model = Comment
-        fields = ['content', 'rating', 'hotel_id']
-
-    def create(self, validated_data):
-        hotel = validated_data.pop('hotel')
-        hotel_obj = Hotel.objects.filter(id=hotel['id']).first()
-        request = self.context.get('request')
-
-        if hotel_obj is None:
-            raise serializers.ValidationError("Hotel doesn't exist!")
-        return Comment.objects.create(**validated_data, hotel=hotel_obj, user=request.user)
+    pass
+#     hotel_id = serializers.CharField(source='hotel.id', write_only=True)
+#
+#     class Meta:
+#         model = Comment
+#         fields = ['content', 'rating', 'hotel_id']
+#
+#     def create(self, validated_data):
+#         hotel = validated_data.pop('hotel')
+#         hotel_obj = Hotel.objects.filter(id=hotel['id']).first()
+#         request = self.context.get('request')
+#
+#         if hotel_obj is None:
+#             raise serializers.ValidationError("Hotel doesn't exist!")
+#         return Comment.objects.create(**validated_data, hotel=hotel_obj, user=request.user)

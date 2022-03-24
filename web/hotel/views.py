@@ -1,6 +1,5 @@
 from base.view_utils import create_view_handlers
-from rest_framework import generics, permissions, viewsets
-from rest_framework import mixins
+from rest_framework import permissions, viewsets
 
 from .models import Hotel, Room, Comment
 from .permissions import HotelOwnerPermission, \
@@ -8,79 +7,47 @@ from .permissions import HotelOwnerPermission, \
     UserCommentPermission
 from .serializers import HotelSerializer, \
     HotelUpdateSerializer, RoomSerializer, \
-    RoomUpdateDeleteSerializer, CommentSerializer, \
-    CommentCreateSerializer
-
-
-class UpdateDestroyApiView(mixins.DestroyModelMixin,
-                           mixins.UpdateModelMixin,
-                           generics.GenericAPIView):
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+    CommentSerializer
 
 
 class HotelViewSet(viewsets.ModelViewSet):
     serializer_class = HotelSerializer
     queryset = Hotel.objects.prefetch_related('owner').all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, HotelOwnerPermission, OwnerEditHotelPermission]
 
-
-class HotelCreateView(generics.CreateAPIView):
-    queryset = Hotel.objects.prefetch_related('owner').all()
-    serializer_class = HotelSerializer
-    permission_classes = [permissions.IsAuthenticated, HotelOwnerPermission]
+    def get_serializer_class(self):
+        if self.action == 'update':
+            return HotelUpdateSerializer
+        return self.serializer_class
 
     def create(self, request, *args, **kwargs):
         return create_view_handlers(self, request, {'message': 'Hotel was created!'}, *args, **kwargs)
 
 
-class HotelDeleteUpdateView(UpdateDestroyApiView):
-    queryset = Hotel.objects.prefetch_related('owner').all()
-    serializer_class = HotelUpdateSerializer
-    permission_classes = [permissions.IsAuthenticated, OwnerEditHotelPermission]
-
-
 class RoomViewSet(viewsets.ModelViewSet):
     serializer_class = RoomSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
 
     def get_queryset(self):
         return Room.objects.prefetch_related('hotel__owner').filter(hotel=self.kwargs['hotel_pk'])
 
-
-class RoomCreateView(generics.CreateAPIView):
-    queryset = Room.objects.prefetch_related('hotel__owner').all()
-    serializer_class = RoomSerializer
-    permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['hotel_pk'] = self.kwargs.get('hotel_pk')
+        return context
 
     def create(self, request, *args, **kwargs):
         return create_view_handlers(self, request, {'message': 'Room was created!'}, *args, **kwargs)
 
 
-class RoomUpdateDeleteView(UpdateDestroyApiView):
-    queryset = Room.objects.prefetch_related('hotel__owner').all()
-    serializer_class = RoomUpdateDeleteSerializer
-    permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
-
-
 class CommentViewSet(viewsets.ModelViewSet):
-    serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Comment.objects.filter(hotel=self.kwargs['hotels_pk'])
-
-
-class CommentDeleteUpdateView(UpdateDestroyApiView):
-    queryset = Comment.objects.select_related('user').all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, UserCommentPermission]
 
+    def get_queryset(self):
+        return Comment.objects.filter(hotel=self.kwargs['hotel_pk'])
 
-class CommentCreateView(generics.CreateAPIView):
-    queryset = Comment.objects.all()
-    serializer_class = CommentCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['hotel_pk'] = self.kwargs.get('hotel_pk')
+        return context

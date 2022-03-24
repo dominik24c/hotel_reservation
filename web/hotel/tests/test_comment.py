@@ -23,7 +23,7 @@ class BaseCommentTestCase(BaseApiTestCase):
 
 class CommentApiViewTest(BaseCommentTestCase):
     def test_list_comment_view(self) -> None:
-        response = self.client.get(reverse('hotel:hotel-comments-list', kwargs={'hotels_pk': str(self.hotel_id)}))
+        response = self.client.get(reverse('hotel:hotel-comments-list', kwargs={'hotel_pk': str(self.hotel_id)}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data['results']
         self.assertEqual(len(data), self.AMOUNT_OF_COMMENTS)
@@ -31,7 +31,7 @@ class CommentApiViewTest(BaseCommentTestCase):
     def test_get_comment_view(self) -> None:
         comment = Comment.objects.filter(hotel__id=self.hotel_id).first()
         response = self.client.get(reverse('hotel:hotel-comments-detail',
-                                           kwargs={'hotels_pk': str(self.hotel_id), 'pk': comment.id}))
+                                           kwargs={'hotel_pk': str(self.hotel_id), 'pk': comment.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(str(comment.id), data['id'])
@@ -41,7 +41,7 @@ class CommentApiViewTest(BaseCommentTestCase):
         self.assertEqual(comment.updated_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ"), data['date'])
 
 
-class CommentCreateUpdateDeleteApiView(BaseCommentTestCase):
+class CommentCRUApiView(BaseCommentTestCase):
     def test_create_comment_view(self) -> None:
         hotel = Hotel.objects.prefetch_related('comments').first()
         amount_of_comments = hotel.comments.count()
@@ -51,7 +51,7 @@ class CommentCreateUpdateDeleteApiView(BaseCommentTestCase):
             'content': 'Hello there!',
             'rating': 4
         }
-        response = self.client.post(reverse('hotel:create-comment-view'), body)
+        response = self.client.post(reverse('hotel:hotel-comments-list', kwargs={'hotel_pk': hotel.id}), body)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         hotel.refresh_from_db()
 
@@ -63,7 +63,8 @@ class CommentCreateUpdateDeleteApiView(BaseCommentTestCase):
             'content': 'Hello there!',
             'rating': 4
         }
-        response = self.client.put(reverse('hotel:update-delete-comment-view', kwargs={'pk': comment.id}), body)
+        response = self.client.put(
+            reverse('hotel:hotel-comments-detail', kwargs={'hotel_pk': comment.hotel.id, 'pk': comment.id}), body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         comment.refresh_from_db()
 
@@ -72,7 +73,8 @@ class CommentCreateUpdateDeleteApiView(BaseCommentTestCase):
 
     def test_delete_comment_view(self) -> None:
         comment = Comment.objects.filter(user__id=self.user.id).first()
-        response = self.client.delete(reverse('hotel:update-delete-comment-view', kwargs={'pk': comment.id}))
+        response = self.client.delete(
+            reverse('hotel:hotel-comments-detail', kwargs={'hotel_pk': comment.hotel.id, 'pk': comment.id}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         with self.assertRaises(Comment.DoesNotExist):
             comment.refresh_from_db()
