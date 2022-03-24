@@ -8,11 +8,27 @@ from .permissions import HotelOwnerPermission, \
     UserCommentPermission
 from .serializers import HotelSerializer, \
     HotelUpdateSerializer, RoomSerializer, \
-    RoomUpdateSerializer, CommentSerializer, \
+    RoomUpdateDeleteSerializer, CommentSerializer, \
     CommentCreateSerializer
 
 
-class HotelCreateListView(generics.ListCreateAPIView):
+class UpdateDestroyApiView(mixins.DestroyModelMixin,
+                           mixins.UpdateModelMixin,
+                           generics.GenericAPIView):
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+class HotelViewSet(viewsets.ModelViewSet):
+    serializer_class = HotelSerializer
+    queryset = Hotel.objects.prefetch_related('owner').all()
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class HotelCreateView(generics.CreateAPIView):
     queryset = Hotel.objects.prefetch_related('owner').all()
     serializer_class = HotelSerializer
     permission_classes = [permissions.IsAuthenticated, HotelOwnerPermission]
@@ -21,19 +37,21 @@ class HotelCreateListView(generics.ListCreateAPIView):
         return create_view_handlers(self, request, {'message': 'Hotel was created!'}, *args, **kwargs)
 
 
-class HotelRDView(generics.RetrieveDestroyAPIView):
-    queryset = Hotel.objects.prefetch_related('owner').all()
-    serializer_class = HotelSerializer
-    permission_classes = [permissions.IsAuthenticated, OwnerEditHotelPermission]
-
-
-class HotelUpdateView(generics.UpdateAPIView):
+class HotelDeleteUpdateView(UpdateDestroyApiView):
     queryset = Hotel.objects.prefetch_related('owner').all()
     serializer_class = HotelUpdateSerializer
     permission_classes = [permissions.IsAuthenticated, OwnerEditHotelPermission]
 
 
-class RoomCreateListView(generics.ListCreateAPIView):
+class RoomViewSet(viewsets.ModelViewSet):
+    serializer_class = RoomSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Room.objects.prefetch_related('hotel__owner').filter(hotel=self.kwargs['hotel_pk'])
+
+
+class RoomCreateView(generics.CreateAPIView):
     queryset = Room.objects.prefetch_related('hotel__owner').all()
     serializer_class = RoomSerializer
     permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
@@ -42,28 +60,10 @@ class RoomCreateListView(generics.ListCreateAPIView):
         return create_view_handlers(self, request, {'message': 'Room was created!'}, *args, **kwargs)
 
 
-class RoomRUDView(generics.RetrieveUpdateDestroyAPIView):
+class RoomUpdateDeleteView(UpdateDestroyApiView):
     queryset = Room.objects.prefetch_related('hotel__owner').all()
-    serializer_class = RoomSerializer
+    serializer_class = RoomUpdateDeleteSerializer
     permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
-
-    def get_serializer_class(self):
-        if self.request.method in ['PUT', 'PATCH']:
-            return RoomUpdateSerializer
-        else:
-            return self.serializer_class
-
-
-class CommentCreateListView(generics.ListCreateAPIView):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated, UserCommentPermission]
-
-
-class HotelViewSet(viewsets.ModelViewSet):
-    serializer_class = HotelSerializer
-    queryset = Hotel.objects.prefetch_related('owner').all()
-    permission_classes = [permissions.IsAuthenticated, OwnerEditHotelPermission]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -74,18 +74,10 @@ class CommentViewSet(viewsets.ModelViewSet):
         return Comment.objects.filter(hotel=self.kwargs['hotels_pk'])
 
 
-class CommentDeleteUpdateView(mixins.DestroyModelMixin,
-                              mixins.UpdateModelMixin,
-                              generics.GenericAPIView):
+class CommentDeleteUpdateView(UpdateDestroyApiView):
     queryset = Comment.objects.select_related('user').all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, UserCommentPermission]
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
 
 
 class CommentCreateView(generics.CreateAPIView):

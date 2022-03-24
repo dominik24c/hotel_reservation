@@ -38,7 +38,7 @@ class HotelApiViewTest(BaseHotelApiViewTestCase):
             'zip_code': '10019'
         }
 
-        response = self.client.post(reverse('hotel:create-list-hotel-view'), body)
+        response = self.client.post(reverse('hotel:create-hotel-view'), body)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         hotel_owner.refresh_from_db()
         hotel = hotel_owner.hotels.filter(name=body['name']).first()
@@ -52,7 +52,7 @@ class HotelApiViewTest(BaseHotelApiViewTestCase):
         self.assertEqual(data['message'], 'Hotel was created!')
 
     def test_list_hotel_view(self) -> None:
-        response = self.client.get(reverse('hotel:create-list-hotel-view'))
+        response = self.client.get(reverse('hotel:hotel-list'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data['results']
         self.assertEqual(len(data), Hotel.objects.count() % 10)
@@ -65,7 +65,7 @@ class HotelRUDApiViewTest(BaseHotelApiViewTestCase):
 
     def test_retrieve_hotel_view(self) -> None:
         hotel = Hotel.objects.prefetch_related('owner').first()
-        response = self.client.get(reverse('hotel:retrieve-delete-hotel-view', kwargs={'pk': hotel.pk}))
+        response = self.client.get(reverse('hotel:hotel-detail', kwargs={'pk': hotel.pk}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self._base_hotel_test_case(data, hotel)
@@ -75,7 +75,7 @@ class HotelRUDApiViewTest(BaseHotelApiViewTestCase):
     def test_delete_hotel_view(self) -> None:
         hotel_owner = HotelOwner.objects.prefetch_related('hotels').first()
         hotel = hotel_owner.hotels.first()
-        response = self.client.delete(reverse('hotel:retrieve-delete-hotel-view', kwargs={'pk': hotel.pk}))
+        response = self.client.delete(reverse('hotel:update-delete-hotel-view', kwargs={'pk': hotel.pk}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         with self.assertRaises(Hotel.DoesNotExist):
@@ -88,7 +88,7 @@ class HotelRUDApiViewTest(BaseHotelApiViewTestCase):
             'description': 'New description',
             'name': 'new hotel'
         }
-        response = self.client.patch(reverse('hotel:update-hotel-view', kwargs={'pk': hotel.pk}), body)
+        response = self.client.put(reverse('hotel:update-delete-hotel-view', kwargs={'pk': hotel.pk}), body)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertEqual(response.data['name'], body['name'])

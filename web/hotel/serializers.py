@@ -28,8 +28,8 @@ class HotelSerializer(serializers.ModelSerializer):
     is_pools = serializers.BooleanField(required=False)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
-    rooms = serializers.HyperlinkedRelatedField(many=True, read_only=True,
-                                                view_name='hotel:create-list-room-view')
+    # rooms = serializers.HyperlinkedRelatedField(many=True, read_only=True,
+    #                                             view_name='hotel:create-list-room-view')
 
     class Meta:
         model = Hotel
@@ -77,7 +77,7 @@ class RoomSerializer(BaseRoomSerializer):
         return room
 
 
-class RoomUpdateSerializer(BaseRoomSerializer):
+class RoomUpdateDeleteSerializer(BaseRoomSerializer):
     pass
 
 
