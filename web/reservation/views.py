@@ -11,6 +11,8 @@ class ReservationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, UserReservationPermission]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Reservation.objects.none()
         return Reservation.objects.filter(customer=self.request.user)
 
     def get_serializer_class(self):

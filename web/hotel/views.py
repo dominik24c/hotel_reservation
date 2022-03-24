@@ -29,6 +29,8 @@ class RoomViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Room.objects.none()
         return Room.objects.prefetch_related('hotel__owner').filter(hotel=self.kwargs['hotel_pk'])
 
     def get_serializer_context(self):
@@ -45,6 +47,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, UserCommentPermission]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Comment.objects.none()
         return Comment.objects.filter(hotel=self.kwargs['hotel_pk'])
 
     def get_serializer_context(self):
