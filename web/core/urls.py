@@ -15,12 +15,29 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 
 API = 'api'
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Hotel Reservation API",
+        default_version='v1',
+        description="Hotel Reservation",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="email@gmail.com"),
+        license=openapi.License(name="MIT License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,)
+)
 
 urlpatterns = [
     path(f'{API}/reservation/', include('reservation.urls', namespace='reservation'), name='reservation'),
     path(f'{API}/', include('account.urls', namespace='account'), name='account'),
     path(f'{API}/', include('hotel.urls', namespace='hotel'), name='hotel'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('admin/', admin.site.urls),
 ]

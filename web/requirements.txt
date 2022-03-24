@@ -8,3 +8,5 @@ django-cors-headers
 djangorestframework-simplejwt
 factory_boy
 drf-nested-routers
+django-extensions
+drf-yasg
