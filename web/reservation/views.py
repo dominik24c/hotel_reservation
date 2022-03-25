@@ -1,3 +1,4 @@
+from base.permissions import CustomerPermission
 from rest_framework import permissions
 from rest_framework import viewsets
 
@@ -8,7 +9,9 @@ from .serializers import ReservationSerializer, ReservationUpdateSerializer
 
 class ReservationViewSet(viewsets.ModelViewSet):
     serializer_class = ReservationSerializer
-    permission_classes = [permissions.IsAuthenticated, UserReservationPermission]
+    permission_classes = [permissions.IsAuthenticated,
+                          CustomerPermission,
+                          UserReservationPermission]
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):

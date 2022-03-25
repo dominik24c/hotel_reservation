@@ -1,3 +1,4 @@
+from base.permissions import CustomerPermission
 from base.view_utils import create_view_handlers
 from rest_framework import permissions, viewsets
 
@@ -44,7 +45,9 @@ class RoomViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated, UserCommentPermission]
+    permission_classes = [permissions.IsAuthenticated,
+                          CustomerPermission,
+                          UserCommentPermission]
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):

@@ -62,7 +62,7 @@ class RoomCRUApiViewTest(BaseRoomViewTestCase):
     def test_update_room_view(self) -> None:
         room = self._get_room()
         body = {
-            'number': 99,
+            'number': 198,
             'size': 210,
             'price': '193.21',
             'beds': 2,
@@ -79,10 +79,9 @@ class RoomCRUApiViewTest(BaseRoomViewTestCase):
         self._test_response_data(body, room)
 
     def test_create_room_view(self) -> None:
-        hotel = Hotel.objects.prefetch_related('rooms').first()
+        hotel = Hotel.objects.prefetch_related('rooms').filter(owner=self.hotel_owner).first()
         body = {
-            'hotel_id': hotel.id,
-            'number': 100,
+            'number': 383,
             'size': 120,
             'price': '400.32',
             'beds': 4,

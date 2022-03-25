@@ -1,3 +1,4 @@
+from account.models import Customer
 from account.models import HotelOwner
 from base.test import BaseApiTestCase
 from django.contrib.auth.models import User
@@ -19,6 +20,10 @@ class BaseCommentTestCase(BaseApiTestCase):
         hotels = create_hotels(list(HotelOwner.objects.all()))
         cls.hotel_id = hotels[0].id
         create_comments(users, hotels, cls.AMOUNT_OF_COMMENTS)
+
+    def setUp(self) -> None:
+        self.user = Customer.objects.first()
+        self.client.force_authenticate(self.user)
 
 
 class CommentApiViewTest(BaseCommentTestCase):
