@@ -18,6 +18,7 @@ Run application by using the commands below:
 sudo docker-compose build
 sudo docker-compose run web python3 manage.py migrate
 sudo docker-compose run web python3 manage.py init_groups
+sudo docker-compose run web python3 manage.py collectstatic
 sudo docker-compose up -d
 ```
 
