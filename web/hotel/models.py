@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.core import validators
 from django.db import models
 
+# class HotelManager(models.Manager):
+#     def get
 
 class Hotel(TimeStampedModel):
     name = models.CharField(max_length=100)
@@ -22,6 +24,9 @@ class Hotel(TimeStampedModel):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['name'], name='idx_hotel_name')
+        ]
 
 
 class Room(TimeStampedModel):
@@ -43,6 +48,10 @@ class Room(TimeStampedModel):
     class Meta:
         ordering = ['-created_at']
         unique_together = ['id', 'number']
+        indexes = [
+            models.Index(fields=['beds'], name='idx_room_beds'),
+            models.Index(fields=['price'], name='idx_room_price')
+        ]
 
 
 class Comment(TimeStampedModel):

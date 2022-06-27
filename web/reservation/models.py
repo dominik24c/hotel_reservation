@@ -16,9 +16,7 @@ class ReservationManager(models.Manager):
         if reservation_id is not None:
             filters = filters & ~Q(id=reservation_id)
 
-        if Reservation.objects.filter(filters).exists():
-            return False
-        return True
+        return Reservation.objects.filter(filters).exists()
 
 
 class Reservation(TimeStampedModel):
