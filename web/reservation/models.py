@@ -10,13 +10,13 @@ from hotel.models import Room
 class ReservationManager(models.Manager):
     def room_is_available(self, room_id: str, start_date: datetime, end_date: datetime, reservation_id: str = None) -> bool:
         filters = Q(room__id=room_id) & ~(
-                (Q(start_date__gt=start_date) & Q(start_date__gt=end_date)) |
-                (Q(end_date__lt=start_date) & Q(end_date__lt=end_date)))
+                (Q(start_date__lt=start_date) & Q(end_date__lt=start_date)) |
+                (Q(start_date__gt=end_date) & Q(end_date__gt=end_date)))
 
         if reservation_id is not None:
             filters = filters & ~Q(id=reservation_id)
 
-        return Reservation.objects.filter(filters).exists()
+        return not Reservation.objects.filter(filters).exists()
 
 
 class Reservation(TimeStampedModel):

@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 from django.core import validators
 from django.db import models
 
-# class HotelManager(models.Manager):
-#     def get
 
 class Hotel(TimeStampedModel):
     name = models.CharField(max_length=100)

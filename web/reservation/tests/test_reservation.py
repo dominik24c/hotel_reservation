@@ -32,6 +32,7 @@ class ReservationApiViewTest(BaseApiTestCase):
 
     def _test_invalid_create_reservation_view(self, body: dict, message: str):
         response = self.client.post(reverse('reservation:reservation-list'), body)
+        # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         if isinstance(response.data, dict):
             self.assertEqual(response.data['non_field_errors'][0], message)
@@ -52,8 +53,8 @@ class ReservationApiViewTest(BaseApiTestCase):
         amount_of_reservations = self.user.reservations.count()
         body = {
             'room': str(room.id),
-            'start_date': str(timezone.datetime(2023, 1, 4)),
-            'end_date': str(timezone.datetime(2023, 1, 10)),
+            'start_date': str(timezone.datetime(2027, 1, 4)),
+            'end_date': str(timezone.datetime(2027, 2, 10)),
         }
         response = self.client.post(reverse('reservation:reservation-list'), body)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
