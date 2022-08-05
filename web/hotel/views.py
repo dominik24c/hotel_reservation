@@ -1,20 +1,23 @@
-from base.permissions import CustomerPermission
-from base.view_utils import create_view_handlers
 from rest_framework import permissions, viewsets
 
+from base.permissions import CustomerPermission
+from base.view_utils import create_view_handlers
 from .models import Hotel, Room, Comment
 from .permissions import HotelOwnerPermission, \
     OwnerEditHotelPermission, RoomHotelOwnerPermission, \
     UserCommentPermission
-from .serializers import HotelSerializer, \
-    HotelUpdateSerializer, RoomSerializer, \
-    CommentSerializer
+from .serializers import (HotelSerializer,
+                          HotelUpdateSerializer, RoomSerializer,
+                          CommentSerializer)
+
+from .filters import HotelFilter, RoomFilter
 
 
 class HotelViewSet(viewsets.ModelViewSet):
     serializer_class = HotelSerializer
     queryset = Hotel.objects.prefetch_related('owner').all()
     permission_classes = [permissions.IsAuthenticated, HotelOwnerPermission, OwnerEditHotelPermission]
+    filterset_class = HotelFilter
 
     def get_serializer_class(self):
         if self.action == 'update':
@@ -28,6 +31,7 @@ class HotelViewSet(viewsets.ModelViewSet):
 class RoomViewSet(viewsets.ModelViewSet):
     serializer_class = RoomSerializer
     permission_classes = [permissions.IsAuthenticated, RoomHotelOwnerPermission]
+    filterset_class = RoomFilter
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):

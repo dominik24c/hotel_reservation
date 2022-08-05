@@ -12,16 +12,14 @@ services:
       - web
   web:
     build: ./web
-    command: gunicorn core.wsgi:application --bind 0.0.0.0:9000
-#    command: python manage.py runserver 0.0.0.0:9000
+#    command: gunicorn core.wsgi:application --bind 0.0.0.0:9000
+    command: python manage.py runserver 0.0.0.0:9000
     container_name: django_web
     volumes:
       - ./web:/app
       - static_volume:/app/static
     env_file:
       - ./web/.env
-    expose:
-      - 9000
     depends_on:
       - db
   db:
