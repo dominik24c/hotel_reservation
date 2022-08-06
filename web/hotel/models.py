@@ -1,8 +1,10 @@
-from account.validators import only_letters, alphanumeric
-from base.models import TimeStampedModel
 from django.contrib.auth.models import User
 from django.core import validators
 from django.db import models
+from django.db.models import Q
+
+from account.validators import only_letters, alphanumeric
+from base.models import TimeStampedModel
 
 
 class Hotel(TimeStampedModel):
@@ -50,6 +52,10 @@ class Room(TimeStampedModel):
             models.Index(fields=['beds'], name='idx_room_beds'),
             models.Index(fields=['price'], name='idx_room_price')
         ]
+        constraints = [
+            models.CheckConstraint(name='check_beds_gte_1_and_lte_4', check=Q(beds__gte=1) & Q(beds__lte=4)),
+            models.CheckConstraint(name='check_size_gte_1_and_lte_1000', check=Q(beds__gte=1) & Q(beds__lte=1000)),
+        ]
 
 
 class Comment(TimeStampedModel):
@@ -63,3 +69,6 @@ class Comment(TimeStampedModel):
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(name='comment_rating_gte_1_and_lte_5', check=Q(rating__gte=1) & Q(rating__lte=5))
+        ]

@@ -1,8 +1,8 @@
-from account.groups import G_HOTEL_OWNER
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework import validators
 
+from account.groups import G_HOTEL_OWNER
 from .models import Hotel, Room, Comment
 
 
@@ -41,6 +41,8 @@ class HotelSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("User doesn't exist!")
         elif user.groups.first().name != G_HOTEL_OWNER:
             raise serializers.ValidationError("Only Hotel owner can create hotel model!")
+        elif Hotel.objects.filter(owner=user).count() >= 4:
+            raise serializers.ValidationError("Hotel Owner can have only 4 hotels!")
 
         return Hotel.objects.create(**validated_data, owner=user)
 
